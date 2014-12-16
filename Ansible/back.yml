@@ -24,6 +24,20 @@
       - curl
       - python-pip
 
-  - name: download, make and install python 2.7.5
+  - name: download python 2.7.5
     sudo: yes
-    script: python.sh > output.txt
+    get_url: url=http://python.org/ftp/python/2.7.5/Python-2.7.5.tgz dest=/tmp/Python-2.7.5.tgz
+
+  - name: untar python 2.7.5
+    sudo: yes
+    unarchive: copy=no src=/tmp/Python-2.7.5.tgz dest=/tmp/
+
+  - name: make and install python 2.7.5
+    sudo: yes
+    shell: "{{ item }}"
+    with_items:
+      - ./configure
+      - make
+      - make altinstall
+    args:
+      chdir: /tmp/Python-2.7.5/

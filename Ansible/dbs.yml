@@ -26,13 +26,51 @@
       - make
       - curl
 
-  - name: download, make and install couchdb 1.5.0
+  - name: download Apache CouchDB 1.5.0
     sudo: yes
-    script: couchdb.sh > output.txt
+    get_url: url=http://ftp.tudelft.nl/apache/couchdb/source/1.5.0/apache-couchdb-1.5.0.tar.gz dest=/tmp/apache-couchdb-1.5.0.tar.gz
+
+  - name: untar couchdb 1.5.0
+    sudo: yes
+    unarchive: copy=no src=/tmp/apache-couchdb-1.5.0.tar.gz dest=/tmp/
+
+  - name: make and install couchdb 1.5.0
+    sudo: yes
+    shell: "{{ item }}"
+    with_items:
+      - ./configure
+      - make
+      - make install
+    args:
+      chdir: /tmp/apache-couchdb-1.5.0
+
+  - name: create and configure the couchdb remote_user
+    sudo: yes
+    user: name=couchdb comment="CouchDB Administrator" system=yes home=/usr/local/var/lib/couchdb createhome=no shell=/bin/bash 
+
+  - name: chown and chmod the couchdb relevant directories
+    sudo: yes
+    file: path={{ item }} recurse=yes owner=couchdb group=couchdb mode=0770
+    with_items:
+      - /usr/local/etc/couchdb
+      - /usr/local/var/lib/couchdb
+      - /usr/local/var/log/couchdb
+      - /usr/local/var/run/couchdb
+
+  - name: create links to couchdb directories
+    sudo: yes
+    file: src={{ item.path }} dest={{ item.dest }} state=link
+    with_items:
+      - { path: '/usr/local/etc/logrotate.d/couchdb', dest: '/etc/logrotate.d/couchdb' }
+      - { path: '/usr/local/etc/init.d/couchdb', dest: '/etc/init.d/couchdb' }
+
+  - name: define the couchdb service on boot
+    sudo: yes
+    service: name=couchdb enabled=yes
 
   - name: update config file to allow any address binding
-    sudo: yes 
-    command: sed -i 's/;bind_address = 127.0.0.1/bind_address = 0.0.0.0/g' /usr/local/etc/couchdb/local.ini
+    sudo: yes
+    lineinfile: dest=/usr/local/etc/couchdb/local.ini regexp="^;bind_address = 127.0.0.1" line=";bind_address = 0.0.0.0" state=present
 
   - name: ensure couchdb is running
     sudo: yes
