@@ -25,7 +25,7 @@ http://docs.ansible.com/intro_installation.html
 
 * Clone this repository:
 ``` 
-git clone https://github.com/virtser/vagrantansible.git
+git clone https://github.com/johnyzed/vagrantansible.git
 ```
 * Create and provision environment:
 ``` 
